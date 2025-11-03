@@ -26,10 +26,18 @@ MyPawn >> renderPieceOn: aSquare [
 
 { #category : 'rendering' }
 MyPawn >> targetSquaresLegal: aBoolean [
-
-	^ (self isWhite
+	self isAtInitialRank 
+		ifTrue: [  ^
+			(self isWhite
+		   ifTrue: [ { square up up} ]
+		   ifFalse: [ { square down down } ]) select: [ :s |
+		  s notNil and: [
+			  s hasPiece not or: [ s contents color ~= color ] ] ]]
+		ifFalse: [ ^
+			(self isWhite
 		   ifTrue: [ { square up } ]
 		   ifFalse: [ { square down } ]) select: [ :s |
 		  s notNil and: [
-			  s hasPiece not or: [ s contents color ~= color ] ] ]
+			  s hasPiece not or: [ s contents color ~= color ] ] ]]
+	
 ]

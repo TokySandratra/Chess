@@ -14,12 +14,21 @@ MyPawnTest >> testBlackIsAtInitialRank [
 ]
 
 { #category : 'tests' }
+MyPawnTest >> testBlackPawnMovesDoubleSquareForward [
+	| pawn board moves|
+	board := MyChessBoard empty.
+	board at: 'e7' put: (pawn := MyPawn black).
+	moves := (pawn targetSquaresLegal: true) collect: [ :s | s name ].
+	self assert: (moves includes: 'e5').
+]
+
+{ #category : 'tests' }
 MyPawnTest >> testBlackPawnMovesOneSquareForward [
 	| pawn board moves|
 	board := MyChessBoard empty.
-	board at: 'f7' put: (pawn := MyPawn black ).
+	board at: 'f6' put: (pawn := MyPawn black ).
 	moves := (pawn targetSquaresLegal: true) collect: [ :s | s name ].
-	self assert: (moves includes: 'f6').
+	self assert: (moves includes: 'f5').
 ]
 
 { #category : 'tests' }
@@ -37,10 +46,19 @@ MyPawnTest >> testWhiteIsAtInitialRank [
 ]
 
 { #category : 'tests' }
-MyPawnTest >> testWhitePawnMovesOneSquareForward [
+MyPawnTest >> testWhitePawnMovesDoubleSquareForward [
 	| pawn board moves|
 	board := MyChessBoard empty.
 	board at: 'e2' put: (pawn := MyPawn white).
 	moves := (pawn targetSquaresLegal: true) collect: [ :s | s name ].
-	self assert: (moves includes: 'e3').
+	self assert: (moves includes: 'e4').
+]
+
+{ #category : 'tests' }
+MyPawnTest >> testWhitePawnMovesOneSquareForward [
+	| pawn board moves|
+	board := MyChessBoard empty.
+	board at: 'e3' put: (pawn := MyPawn white).
+	moves := (pawn targetSquaresLegal: true) collect: [ :s | s name ].
+	self assert: (moves includes: 'e4').
 ]

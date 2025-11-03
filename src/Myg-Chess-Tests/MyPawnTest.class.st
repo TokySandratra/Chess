@@ -6,6 +6,14 @@ Class {
 }
 
 { #category : 'tests' }
+MyPawnTest >> testBlackIsAtInitialRank [ 
+	|pawn board|
+	board := MyChessBoard empty .
+	board at: 'e7' put: (pawn:= MyPawn black ).
+	self assert: (pawn isAtInitialRank) equals: true.
+]
+
+{ #category : 'tests' }
 MyPawnTest >> testBlackPawnMovesOneSquareForward [
 	| pawn board moves|
 	board := MyChessBoard empty.
@@ -18,6 +26,14 @@ MyPawnTest >> testBlackPawnMovesOneSquareForward [
 MyPawnTest >> testId [
 
 	self assert: MyPawn new id equals: 'P'
+]
+
+{ #category : 'tests' }
+MyPawnTest >> testWhiteIsAtInitialRank [ 
+	|pawn board|
+	board := MyChessBoard empty .
+	board at: 'e2' put: (pawn:= MyPawn white).
+	self assert: (pawn isAtInitialRank) equals: true.
 ]
 
 { #category : 'tests' }

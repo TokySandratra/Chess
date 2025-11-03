@@ -11,6 +11,13 @@ MyPawn >> id [
 	^ 'P'
 ]
 
+{ #category : 'accessing' }
+MyPawn >> isAtInitialRank [
+	^ self isWhite
+		ifTrue: [ square name last = $2 ]
+		ifFalse: [ square name last = $7 ]
+]
+
 { #category : 'rendering' }
 MyPawn >> renderPieceOn: aSquare [ 
 	

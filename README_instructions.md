@@ -48,7 +48,7 @@ This repository contains:
 
 ## Katas
 
-These are some ideas of exercises you may try:
+
 
 ### Fix pawn moves! (Toky)
 

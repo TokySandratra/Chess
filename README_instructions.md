@@ -50,23 +50,13 @@ This repository contains:
 
 These are some ideas of exercises you may try:
 
-### Fix pawn moves!
-
-### Restrict legal moves
-
-### Fuzz the board
-
-### Implement more bot gaming strategies
+### Fix pawn moves! (Toky)
 
 ### Remove nil checks (Einstein)
 
 ### Refactor piece rendering (Marie)
 
-### Make the chess board graphical editor
 
-### Make the game UI themable
-
-### Implement the 9 queens problem
 
 ### Positional Heatmap
 

@@ -57,10 +57,3 @@ These are some ideas of exercises you may try:
 ### Refactor piece rendering (Marie)
 
 
-
-### Positional Heatmap
-
-### Chess puzzles database integration
-
-## Troubleshotting
-

@@ -58,9 +58,9 @@ These are some ideas of exercises you may try:
 
 ### Implement more bot gaming strategies
 
-### Remove nil checks
+### Remove nil checks (Einstein)
 
-### Refactor piece rendering
+### Refactor piece rendering (Marie)
 
 ### Make the chess board graphical editor
 

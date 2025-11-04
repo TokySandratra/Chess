@@ -9,14 +9,14 @@ Class {
 MyPawn >> addEnPassantTargets: targets [
 	self isWhite 
 		ifTrue: [ 
-				{ super upLeftDiagonal. super upRightDiagonal } do: [ :diag |
-		(diag notNil and: [ diag = (MyChessBoard empty) enPassantTargetSquare ])
-			ifTrue: [ targets add: diag ] ].
+				{ square up left . square up right } do: [ :diag |
+		(diag notNil and: [ diag = self board enPassantTargetSquare ])
+			ifTrue: [ targets  add: diag ] ].
 		] 
 		ifFalse: [ 
-			{ super downLeftDiagonal. super downRightDiagonal } do: [ :diag |
-		(diag notNil and: [ diag = (MyChessBoard empty) enPassantTargetSquare ])
-			ifTrue: [ targets add: diag ] ].
+			{ square down left . square down right } do: [ :diag |
+		(diag notNil and: [ diag = self board enPassantTargetSquare ])
+			ifTrue: [ targets add: diag] ].
 		 ]
 	
 ]
@@ -69,11 +69,12 @@ MyPawn >> targetSquaresLegal: aBoolean [
 			ifTrue: [ moves add: s ] ].
 
 	"EnPassant"
-	epSquare := self board enPassantTargetSquare.
+	"epSquare := self board enPassantTargetSquare.
 	epSquare ifNotNil: [
 		captureSquares do: [ :s |
 			(s = epSquare) ifTrue: [ moves add: s ] ].
-		].
+		]."
+		self addEnPassantTargets: moves .
 
 	^ moves asArray
 

@@ -171,12 +171,18 @@ MyPiece >> moveTo: aSquare [
 			targetRank := (((self square name last digitValue) + (aSquare name last digitValue)) // 2) asString. 
 			self board enPassantTargetSquare: (self board at: targetFile , targetRank).
 		].
-
+    		
 	(self legalTargetSquares includes: aSquare) ifFalse: [ ^ self ].
 
 	square emptyContents.
 	square := aSquare.
-	aSquare contents: self
+	aSquare contents: self.
+	
+	(self board enPassantTargetSquare = aSquare) ifTrue:  
+	[ 
+		self isWhite ifTrue: [ square down emptyContents ]
+		ifFalse: [ square up emptyContents ]
+	 ]
 	
 		
 ]

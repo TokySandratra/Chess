@@ -252,8 +252,25 @@ moveTo: aSquare
 > - Myg-Chess-Importers : import des données ou état plateau depuis API, chargement ressources ( images ..) 
 > - Myg-Chess-Tests : verification et validation ( deplacement valides , regles respectées, bon resultats, importations fonctionne bien )
 
+## Design decision
+#### Why the code is structured this way ?
+- Each piece (Pawn, Rook, Knight, etc.) encapsulates its own movement logic especially here `MyPawn`
+- The Pawn class is responsible for special rules like en passant so that we should adapt the structure with it
+### Priorities
+- Added comprehensive tests before optimizing performance. (TDD)
+- Focused first on correctness of pawn moves.
+- Then ensured clarity and readability of the methods.
+### Design patterns used
+- Template Method pattern: used for defining general movement behavior in Piece and refining it in Pawn.
+- Hook methods: allow subclasses to customize behavior without modifying the main algorithm.
+- Polymorphism: all pieces share the same interface for possibleMoves, enabling easy extension.( all pieces can use the method `up`, `down`, `left`, `right`)
 ---
 ## Summary :
+- During this kata, I know a lot of new things :
+> - Structure of game (Chess)
+> - How strong is the reverse enginneering to understand a code a solve specifics problem
+> - How important is the polymorphism in development 
+> - TDD is very useful and a good way to master all tasks and make you focused on microtasks to solve a big problem without any errors in the end
 
 ---
 ---

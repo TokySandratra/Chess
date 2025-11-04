@@ -8,7 +8,8 @@ Class {
 		'state',
 		'whiteColor',
 		'blackColor',
-		'game'
+		'game',
+		'enPassantTargetSquare'
 	],
 	#category : 'Myg-Chess-Core',
 	#package : 'Myg-Chess-Core'
@@ -74,6 +75,19 @@ MyChessBoard >> click: aMyChessSquare [
 ]
 
 { #category : 'accessing' }
+MyChessBoard >> enPassantTargetSquare [
+	^ enPassantTargetSquare
+
+
+]
+
+{ #category : 'accessing' }
+MyChessBoard >> enPassantTargetSquare: aSquare [
+	enPassantTargetSquare := aSquare
+
+]
+
+{ #category : 'accessing' }
 MyChessBoard >> game [
 
 	^ game
@@ -95,6 +109,7 @@ MyChessBoard >> highLightTargets: squares [
 MyChessBoard >> initialize [
 
 	super initialize.
+	enPassantTargetSquare := nil.
 
 	self blackColor: Color blue.
 	self whiteColor: Color orange.

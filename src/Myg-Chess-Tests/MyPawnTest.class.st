@@ -32,6 +32,17 @@ MyPawnTest >> testBlackPawnMovesOneSquareForward [
 ]
 
 { #category : 'tests' }
+MyPawnTest >> testEnPassant [
+	| board pawn moves |
+	board := MyChessBoard empty.
+	board enPassantTargetSquare: (board at: 'd6').
+	pawn := MyPawn white.
+	board at:'e5' put: pawn.
+	moves := (pawn targetSquaresLegal:true) collect: [ :s | s name ].
+	self assert: (moves includes: 'd6').
+]
+
+{ #category : 'tests' }
 MyPawnTest >> testId [
 
 	self assert: MyPawn new id equals: 'P'

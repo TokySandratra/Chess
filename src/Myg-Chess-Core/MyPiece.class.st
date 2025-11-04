@@ -163,6 +163,16 @@ MyPiece >> legalTargetSquares [
 
 { #category : 'path commands' }
 MyPiece >> moveTo: aSquare [
+	| delta targetFile targetRank |
+	self board enPassantTargetSquare:nil .
+	
+	delta := (self square name last digitValue - aSquare name last digitValue) abs.
+	(delta = 2) 
+		ifTrue: [ 
+			targetFile := self square name first asString.  "ex: 'e'"
+			targetRank := (((self square name last digitValue) + (aSquare name last digitValue)) // 2) asString.  "ex: '3'"
+		self board enPassantTargetSquare: (self board at: targetFile , targetRank).
+		].
 
 	(self legalTargetSquares includes: aSquare) ifFalse: [ ^ self ].
 

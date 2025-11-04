@@ -72,7 +72,8 @@ MyPawn >> targetSquaresLegal: aBoolean [
 	epSquare := self board enPassantTargetSquare.
 	epSquare ifNotNil: [
 		captureSquares do: [ :s |
-			(s = epSquare) ifTrue: [ moves add: s ] ] ].
+			(s = epSquare) ifTrue: [ moves add: s ] ].
+		].
 
 	^ moves asArray
 

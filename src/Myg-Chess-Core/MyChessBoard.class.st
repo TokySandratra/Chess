@@ -83,7 +83,7 @@ MyChessBoard >> enPassantTargetSquare [
 
 { #category : 'accessing' }
 MyChessBoard >> enPassantTargetSquare: aSquare [
-	enPassantTargetSquare := aSquare
+	 enPassantTargetSquare := aSquare
 
 ]
 
@@ -109,7 +109,6 @@ MyChessBoard >> highLightTargets: squares [
 MyChessBoard >> initialize [
 
 	super initialize.
-	enPassantTargetSquare := nil.
 
 	self blackColor: Color blue.
 	self whiteColor: Color orange.
@@ -204,6 +203,7 @@ MyChessBoard >> initializePieces [
 MyChessBoard >> initializeSquares [
 
 	| black |
+	enPassantTargetSquare := nil.
 	black := false.
 	$a asciiValue to: $h asciiValue do: [ :column |
 		8 to: 1 by: -1 do: [ :file |

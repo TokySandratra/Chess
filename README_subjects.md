@@ -1,4 +1,4 @@
-# Myg Chess Game
+# Chess Game Group 10 (Einstein, Toky, Marie)
 
 This is a chess game for Pharo based on Bloc, Toplo and Myg.
 

@@ -1,4 +1,4 @@
-# Chess Game Group 10 (Einstein, Toky, Marie)
+# Chess Game : Group 10 (Einstein, Toky, Marie)
 
 This is a chess game for Pharo based on Bloc, Toplo and Myg.
 
@@ -11,23 +11,29 @@ The goal of this repository is not to be a complete full blown game, but a good 
  - profiling
  - debugging
 
-## Getting started
+## Installation instructions
+### 1. Download and install Pharo
+- Go to https://pharo.org/download
+- Download the latest Pharo launcher for your operating system (Windows, macOS, or Linux)
+- Install and open Pharo
 
-### Getting the code
-
-This code has been tested in Pharo 12. You can get it by installing the following baseline code:
+### 2. Load the project baseline
+- In a new Pharo image, open the Playground (Ctrl + W) and execute:
 
 ```smalltalk
 Metacello new
-	repository: 'github://UnivLille-Meta/Chess:main';
+	repository: 'github.com/TokySandratra/Chess:main';
 	baseline: 'MygChess';
 	onConflictUseLoaded;
 	load.
 ```
+- This will automatically load the project code, dependencies, and tests.
 
-### Using it
+### 3. Verify installation
+- In the Pharo browser, search for the package by filtering with:  'chess'
+- You should see the classes and tests in your image.
 
-You can open the chess game using the following expression:
+### 4. You can open the chess game using the following expression:
 
 ```smalltalk
 board := MyChessGame freshGame.
@@ -39,17 +45,12 @@ space resizable: true.
 space show.
 ```
 
-## Relevant Design Points
-
-This repository contains:
- - a chess model: the board/squares, the pieces, their movements, how they threat each other
- - a UI using Bloc and Toplo: a board is rendered as bloc UI elements. Each square is a UI element that contains a selection, an optional piece. Pieces are rendered using a text element and a special chess font (https://github.com/joshwalters/open-chess-font/tree/master).
- - Textual game importers for the PGN and FEN standards (see https://ia902908.us.archive.org/26/items/pgn-standard-1994-03-12/PGN_standard_1994-03-12.txt and https://www.chessprogramming.org/Forsyth-Edwards_Notation#Samples)
-
 ## Katas
-
-
-
+- Each member of the group 10 have decided to take one Kata per person : 
+    - Fix pawn moves : Toky
+    - Remove nil checks : Einstein
+    - Refactor piece rendering : Marie
+      
 ### Fix pawn moves! (Toky)
 
 ### Remove nil checks (Einstein)

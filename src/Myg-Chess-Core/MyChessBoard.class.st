@@ -38,7 +38,8 @@ MyChessBoard class >> new [
 { #category : 'accessing' }
 MyChessBoard >> at: coordinate [
 
-	^ grid at: coordinate ifAbsent: nil
+	"Return a sentinel when the coordinate is outside the board instead of nil."
+	^ grid at: coordinate ifAbsent: [ MyNoSquare new ]
 ]
 
 { #category : 'accessing' }
@@ -102,7 +103,7 @@ MyChessBoard >> game: aGame [
 { #category : 'highlighting' }
 MyChessBoard >> highLightTargets: squares [
 
-	squares do: [ :sq | sq ifNotNil: #highlightTarget ]
+	squares do: [ :sq | sq highlightTarget ]
 ]
 
 { #category : 'initialization' }
@@ -114,6 +115,8 @@ MyChessBoard >> initialize [
 	self whiteColor: Color orange.
 
 	state := MyUnselectedState board: self.
+	"Initialize selected to an empty sentinel so we can use polymorphic isEmpty checks"
+	selected := MyNoSelection new.
 	grid := Dictionary new.
 
 	self background: (BlBackground paint: Color veryVeryLightGray).
@@ -170,8 +173,10 @@ MyChessBoard >> initializePieces [
 						          initialize;
 						          yourself ].
 			square name: squareNotation.
-			grid at: squareNotation put: square.
-			self addChild: square ].
+				"Ensure the square starts with an empty piece sentinel"
+				square emptyContents.
+				grid at: squareNotation put: square.
+				self addChild: square ].
 		black := black not ].
 
 	self at: 'a1' put: MyRook white.
@@ -216,7 +221,6 @@ MyChessBoard >> initializeSquares [
 						          color: Color black;
 						          board: self;
 						          initialize;
-						          contents: nil;
 						          yourself ]
 				          ifFalse: [
 					          black := true.
@@ -224,7 +228,6 @@ MyChessBoard >> initializeSquares [
 						          color: Color white;
 						          board: self;
 						          initialize;
-						          contents: nil;
 						          yourself ].
 			square name: squareNotation.
 			grid at: squareNotation put: square.
@@ -253,13 +256,13 @@ MyChessBoard >> selected: aMyChessSquare [
 { #category : 'highlighting' }
 MyChessBoard >> unhighLightTargets: squares [
 
-	squares do: [ :sq | sq ifNotNil: #unhighlightTarget ]
+	squares do: [ :sq | sq unhighlightTarget ]
 ]
 
 { #category : 'selection' }
 MyChessBoard >> unselectSelected [
-	
-	selected ifNil: [ ^ self ].
+	"Use polymorphic isEmpty instead of a nil check."
+	selected isEmpty ifTrue: [ ^ self ].
 	selected doUnselect
 ]
 

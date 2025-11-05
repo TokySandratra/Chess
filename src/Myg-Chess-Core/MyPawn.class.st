@@ -10,12 +10,12 @@ MyPawn >> addEnPassantTargets: targets [
 	self isWhite 
 		ifTrue: [ 
 				{ square up left . square up right } do: [ :diag |
-		(diag notNil and: [ diag = self board enPassantTargetSquare ])
+		(diag isOnBoard and: [ diag = self board enPassantTargetSquare ])
 			ifTrue: [ targets  add: diag ] ].
 		] 
 		ifFalse: [ 
 			{ square down left . square down right } do: [ :diag |
-		(diag notNil and: [ diag = self board enPassantTargetSquare ])
+		(diag isOnBoard and: [ diag = self board enPassantTargetSquare ])
 			ifTrue: [ targets add: diag] ].
 		 ]
 	
@@ -51,13 +51,13 @@ MyPawn >> targetSquaresLegal: aBoolean [
 		ifFalse: [ { square down } ].
 
 	forwardSquares do: [ :s |
-		(s notNil and: [ s hasPiece not ]) ifTrue: [ moves add: s ] ].
+		(s isOnBoard and: [ s hasPiece not ]) ifTrue: [ moves add: s ] ].
 
 	"If the pawn is at his initialRank"
 	self isAtInitialRank ifTrue: [
 		| doubleStep |
 		doubleStep := self isWhite ifTrue: [ square up up ] ifFalse: [ square down down ].
-		(doubleStep notNil and: [ doubleStep hasPiece not ]) ifTrue: [ moves add: doubleStep ] ].
+	(doubleStep isOnBoard and: [ doubleStep hasPiece not ]) ifTrue: [ moves add: doubleStep ] ].
 
 	"Classical diagonal captured"
 	captureSquares := self isWhite
@@ -65,7 +65,7 @@ MyPawn >> targetSquaresLegal: aBoolean [
 		ifFalse: [ {square down left . square down right} ].
 
 	captureSquares do: [ :s |
-		(s notNil and: [ s hasPiece and: [ s contents color ~= color ] ])
+		(s isOnBoard and: [ s hasPiece and: [ s contents color ~= color ] ])
 			ifTrue: [ moves add: s ] ].
 
 	"EnPassant"

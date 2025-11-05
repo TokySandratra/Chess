@@ -130,11 +130,12 @@ MyFENParser >> parseRank [
 		^ (1 to: 8) collect: [ :i | 'empty' ] ].
 
 	rank := OrderedCollection new.
-	[ self peek notNil and: [ (#( $  $/ ) includes: self peek) not ] ]
+	"Stop when the stream is at end or we hit a space or '/'. Avoid peeking for nil."
+	[ stream atEnd not and: [ (#( $  $/ ) includes: self peek) not ] ]
 		whileTrue: [
 			rank add: (self peek isDigit
-					 ifTrue: [ stream next ]
-					 ifFalse: [ self parsePiece ]) ].
+						ifTrue: [ stream next ]
+						ifFalse: [ self parsePiece ]) ].
 	^ rank
 ]
 

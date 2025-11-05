@@ -46,8 +46,8 @@ MyPiece >> collectSquares: aBlock [
 { #category : 'rendering' }
 MyPiece >> collectSquares: aBlock legal: shouldBeLegal [
 
-	^ self collectSquares: aBlock while: [ :aSquare |
-		  aSquare notNil and: [ shouldBeLegal ==> aSquare hasPiece not ] ]
+    ^ self collectSquares: aBlock while: [ :aSquare |
+	    aSquare isOnBoard and: [ shouldBeLegal ==> aSquare hasPiece not ] ]
 ]
 
 { #category : 'rendering' }
@@ -61,8 +61,9 @@ MyPiece >> collectSquares: collectBlock while: untilBlock [
 	[ untilBlock value: (next := collectBlock value: next) ]
 		whileTrue: [ targets add: next ].
 
-	"If we can it the next piece, then add it too"
-	(next notNil and: [ next contents color ~= color ]) ifTrue: [ targets add: next ].
+	"If we can hit the next piece, then add it too. Use isOnBoard so off-board
+	sentinel squares act as blockers via hasPiece = true."
+	(next isOnBoard and: [ next contents color ~= color ]) ifTrue: [ targets add: next ].
 
 	^ targets
 ]
@@ -100,9 +101,9 @@ MyPiece >> downLeftDiagonal [
 { #category : 'rendering' }
 MyPiece >> downLeftDiagonalLegal: aBoolean [
 
-	^ self
-		  collectSquares: [ :aSquare | aSquare down ifNotNil: #left ]
-		  legal: aBoolean
+    ^ self
+	    collectSquares: [ :aSquare | aSquare down left ]
+	    legal: aBoolean
 ]
 
 { #category : 'rendering' }
@@ -114,9 +115,9 @@ MyPiece >> downRightDiagonal [
 { #category : 'rendering' }
 MyPiece >> downRightDiagonalLegal: aBoolean [
 
-	^ self
-		  collectSquares: [ :aSquare | aSquare down ifNotNil: #right ]
-		  legal: aBoolean
+    ^ self
+	    collectSquares: [ :aSquare | aSquare down right ]
+	    legal: aBoolean
 ]
 
 { #category : 'accessing' }
@@ -129,6 +130,12 @@ MyPiece >> id [
 MyPiece >> isKing [
 	
 	^ false
+]
+
+{ #category : 'testing' }
+MyPiece >> isEmpty [
+
+    ^ false
 ]
 
 { #category : 'testing' }
@@ -243,7 +250,7 @@ MyPiece >> upLeftDiagonal [
 { #category : 'rendering' }
 MyPiece >> upLeftDiagonalLegal: aBoolean [
 
-	^ self collectSquares: [ :aSquare | aSquare up ifNotNil: #left ] legal: aBoolean
+	^ self collectSquares: [ :aSquare | aSquare up left ] legal: aBoolean
 ]
 
 { #category : 'rendering' }
@@ -255,7 +262,7 @@ MyPiece >> upRightDiagonal [
 { #category : 'rendering' }
 MyPiece >> upRightDiagonalLegal: aBoolean [
 
-	^ self
-		  collectSquares: [ :aSquare | aSquare up ifNotNil: #right ]
-		  legal: aBoolean
+    ^ self
+	    collectSquares: [ :aSquare | aSquare up right ]
+	    legal: aBoolean
 ]

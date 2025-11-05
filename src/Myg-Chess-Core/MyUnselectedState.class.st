@@ -33,7 +33,8 @@ MyUnselectedState >> clickOn: aMyChessSquare [
 	"Nothing is selected.
 	Select the chess square"
 	aMyChessSquare select.
-	aMyChessSquare contents ifNotNil: [
+	"Use polymorphic isEmpty to decide whether to highlight targets."
+	aMyChessSquare contents isEmpty ifFalse: [
 		board highLightTargets: aMyChessSquare contents targetSquares ].
 
 	^ MySelectedState board: board selected: aMyChessSquare

@@ -52,7 +52,8 @@ MyPGNParser >> nextToken [
 	| token specialSymbols |
 	specialSymbols := #( $* $( $) $< $> $  $[ $] ).
 	
-	stream peek ifNil: [ ^ nil ].
+	"If the stream is at its end, return nil token"
+	stream atEnd ifTrue: [ ^ nil ].
 
 	(#( $* $( $) $< $> ) includes: stream peek) ifTrue: [
 		self notYetImplemented ].

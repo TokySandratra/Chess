@@ -6,9 +6,32 @@ Class {
 }
 
 { #category : 'accessing' }
+MyPawn >> addEnPassantTargets: targets [
+	self isWhite 
+		ifTrue: [ 
+				{ square up left . square up right } do: [ :diag |
+		(diag isOnBoard and: [ diag = self board enPassantTargetSquare ])
+			ifTrue: [ targets  add: diag ] ].
+		] 
+		ifFalse: [ 
+			{ square down left . square down right } do: [ :diag |
+		(diag isOnBoard and: [ diag = self board enPassantTargetSquare ])
+			ifTrue: [ targets add: diag] ].
+		 ]
+	
+]
+
+{ #category : 'accessing' }
 MyPawn >> id [
 
 	^ 'P'
+]
+
+{ #category : 'accessing' }
+MyPawn >> isAtInitialRank [
+	^ self isWhite
+		ifTrue: [ square name last = $2 ]
+		ifFalse: [ square name last = $7 ]
 ]
 
 { #category : 'rendering' }
@@ -19,10 +42,41 @@ MyPawn >> renderPieceOn: aSquare [
 
 { #category : 'rendering' }
 MyPawn >> targetSquaresLegal: aBoolean [
+	| moves forwardSquares captureSquares epSquare |
+	moves := OrderedCollection new.
 
-	^ (self isWhite
-		   ifTrue: [ { square up } ]
-		   ifFalse: [ { square down } ]) select: [ :s |
-		  s notNil and: [
-			  s hasPiece not or: [ s contents color ~= color ] ] ]
+	"Normal Move One Square forward"
+	forwardSquares := self isWhite
+		ifTrue: [ { square up } ]
+		ifFalse: [ { square down } ].
+
+	forwardSquares do: [ :s |
+		(s isOnBoard and: [ s hasPiece not ]) ifTrue: [ moves add: s ] ].
+
+	"If the pawn is at his initialRank"
+	self isAtInitialRank ifTrue: [
+		| doubleStep |
+		doubleStep := self isWhite ifTrue: [ square up up ] ifFalse: [ square down down ].
+	(doubleStep isOnBoard and: [ doubleStep hasPiece not ]) ifTrue: [ moves add: doubleStep ] ].
+
+	"Classical diagonal captured"
+	captureSquares := self isWhite
+		ifTrue: [ { square up left . square up right} ]
+		ifFalse: [ {square down left . square down right} ].
+
+	captureSquares do: [ :s |
+		(s isOnBoard and: [ s hasPiece and: [ s contents color ~= color ] ])
+			ifTrue: [ moves add: s ] ].
+
+	"EnPassant"
+	"epSquare := self board enPassantTargetSquare.
+	epSquare ifNotNil: [
+		captureSquares do: [ :s |
+			(s = epSquare) ifTrue: [ moves add: s ] ].
+		]."
+		self addEnPassantTargets: moves .
+
+	^ moves asArray
+
+	
 ]

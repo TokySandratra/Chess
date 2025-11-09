@@ -46,8 +46,8 @@ MyPiece >> collectSquares: aBlock [
 { #category : 'rendering' }
 MyPiece >> collectSquares: aBlock legal: shouldBeLegal [
 
-	^ self collectSquares: aBlock while: [ :aSquare |
-		  aSquare notNil and: [ shouldBeLegal ==> aSquare hasPiece not ] ]
+    ^ self collectSquares: aBlock while: [ :aSquare |
+	    aSquare isOnBoard and: [ shouldBeLegal ==> aSquare hasPiece not ] ]
 ]
 
 { #category : 'rendering' }
@@ -61,8 +61,9 @@ MyPiece >> collectSquares: collectBlock while: untilBlock [
 	[ untilBlock value: (next := collectBlock value: next) ]
 		whileTrue: [ targets add: next ].
 
-	"If we can it the next piece, then add it too"
-	(next notNil and: [ next contents color ~= color ]) ifTrue: [ targets add: next ].
+	"If we can hit the next piece, then add it too. Use isOnBoard so off-board
+	sentinel squares act as blockers via hasPiece = true."
+	(next isOnBoard and: [ next contents color ~= color ]) ifTrue: [ targets add: next ].
 
 	^ targets
 ]
@@ -100,9 +101,9 @@ MyPiece >> downLeftDiagonal [
 { #category : 'rendering' }
 MyPiece >> downLeftDiagonalLegal: aBoolean [
 
-	^ self
-		  collectSquares: [ :aSquare | aSquare down ifNotNil: #left ]
-		  legal: aBoolean
+    ^ self
+	    collectSquares: [ :aSquare | aSquare down left ]
+	    legal: aBoolean
 ]
 
 { #category : 'rendering' }
@@ -114,9 +115,9 @@ MyPiece >> downRightDiagonal [
 { #category : 'rendering' }
 MyPiece >> downRightDiagonalLegal: aBoolean [
 
-	^ self
-		  collectSquares: [ :aSquare | aSquare down ifNotNil: #right ]
-		  legal: aBoolean
+    ^ self
+	    collectSquares: [ :aSquare | aSquare down right ]
+	    legal: aBoolean
 ]
 
 { #category : 'accessing' }
@@ -129,6 +130,12 @@ MyPiece >> id [
 MyPiece >> isKing [
 	
 	^ false
+]
+
+{ #category : 'testing' }
+MyPiece >> isEmpty [
+
+    ^ false
 ]
 
 { #category : 'testing' }
@@ -163,12 +170,28 @@ MyPiece >> legalTargetSquares [
 
 { #category : 'path commands' }
 MyPiece >> moveTo: aSquare [
-
+	| delta targetFile targetRank |
+	delta := (self square name last digitValue - aSquare name last digitValue) abs.
+	(delta = 2) 
+		ifTrue: [ 
+			targetFile := self square name first asString. 
+			targetRank := (((self square name last digitValue) + (aSquare name last digitValue)) // 2) asString. 
+			self board enPassantTargetSquare: (self board at: targetFile , targetRank).
+		].
+    		
 	(self legalTargetSquares includes: aSquare) ifFalse: [ ^ self ].
 
 	square emptyContents.
 	square := aSquare.
-	aSquare contents: self
+	aSquare contents: self.
+	
+	(self board enPassantTargetSquare = aSquare) ifTrue:  
+	[ 
+		self isWhite ifTrue: [ square down emptyContents ]
+		ifFalse: [ square up emptyContents ]
+	 ]
+	
+		
 ]
 
 { #category : 'rendering' }
@@ -227,7 +250,7 @@ MyPiece >> upLeftDiagonal [
 { #category : 'rendering' }
 MyPiece >> upLeftDiagonalLegal: aBoolean [
 
-	^ self collectSquares: [ :aSquare | aSquare up ifNotNil: #left ] legal: aBoolean
+	^ self collectSquares: [ :aSquare | aSquare up left ] legal: aBoolean
 ]
 
 { #category : 'rendering' }
@@ -239,7 +262,7 @@ MyPiece >> upRightDiagonal [
 { #category : 'rendering' }
 MyPiece >> upRightDiagonalLegal: aBoolean [
 
-	^ self
-		  collectSquares: [ :aSquare | aSquare up ifNotNil: #right ]
-		  legal: aBoolean
+    ^ self
+	    collectSquares: [ :aSquare | aSquare up right ]
+	    legal: aBoolean
 ]

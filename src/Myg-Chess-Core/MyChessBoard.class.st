@@ -135,104 +135,96 @@ MyChessBoard >> initialize [
 { #category : 'initialization' }
 MyChessBoard >> initializeFromFENBoard: aFENBoard [
 
-	aFENBoard keysAndValuesDo: [ :k :v |
-		v ~= 'empty' ifTrue: [
-			| substrings color piece |
-			substrings := v substrings.
-			color := substrings first.
-			piece := substrings second.
-			self
-				at: k
-				put:
-					((self class environment at: ('My' , piece capitalized) asSymbol)
-						 perform: color asLowercase asSymbol) ] ]
+    aFENBoard keysAndValuesDo: [ :k :v |
+        v ~= 'empty' ifTrue: [
+            | substrings color piece |
+            substrings := v substrings.
+            color := substrings first.
+            piece := substrings second.
+            self
+                at: k
+                put:
+                    ((self class environment at: ( color, piece capitalized) asSymbol)
+                         perform: color asLowercase asSymbol) ] ]
 ]
 
 { #category : 'initialization' }
-MyChessBoard >> initializePieces [
+MyChessBoard >> initializePieces [ 
+  
+    | black |
+    black := false.
+    $a asciiValue to: $h asciiValue do: [ :column |
+        8 to: 1 by: -1 do: [ :file |
+            | squareNotation square |
+            squareNotation := column asCharacter asString , file asString.
+            square := black
+                          ifTrue: [
+                              black := false.
+                              BlackChessSquare new 
+                                  board: self;
+                                  yourself ]
+                          ifFalse: [
+                              black := true.
+                              WhiteChessSquare new 
+                                  board: self;
+                                  yourself ].
+            square name: squareNotation.
+            "Ensure the square starts with an empty piece sentinel"
+				    square emptyContents.
+            grid at: squareNotation put: square.
+            self addChild: square ].
+        black := black not ].
 
-	| black |
-	black := false.
-	$a asciiValue to: $h asciiValue do: [ :column |
-		8 to: 1 by: -1 do: [ :file |
-			| squareNotation square |
-			squareNotation := column asCharacter asString , file asString.
-			square := black
-				          ifTrue: [
-					          black := false.
-					          MyChessSquare basicNew
-						          color: Color black;
-						          board: self;
-						          initialize;
-						          yourself ]
-				          ifFalse: [
-					          black := true.
-					          MyChessSquare basicNew
-						          color: Color white;
-						          board: self;
-						          initialize;
-						          yourself ].
-			square name: squareNotation.
-				"Ensure the square starts with an empty piece sentinel"
-				square emptyContents.
-				grid at: squareNotation put: square.
-				self addChild: square ].
-		black := black not ].
+    self at: 'a1' put: WhiteRook white.
+    self at: 'b1' put: WhiteKnight white.
+    self at: 'c1' put: WhiteBishop white.
+    self at: 'd1' put: WhiteQueen white.
+    self at: 'e1' put: WhiteKing white.
+    self at: 'f1' put: WhiteBishop white.
+    self at: 'g1' put: WhiteKnight white.
+    self at: 'h1' put: WhiteRook white.
 
-	self at: 'a1' put: MyRook white.
-	self at: 'b1' put: MyKnight white.
-	self at: 'c1' put: MyBishop white.
-	self at: 'd1' put: MyQueen white.
-	self at: 'e1' put: MyKing white.
-	self at: 'f1' put: MyBishop white.
-	self at: 'g1' put: MyKnight white.
-	self at: 'h1' put: MyRook white.
+    $a asciiValue to: $h asciiValue do: [ :column |
+        self at: column asCharacter asString , '2' put: WhitePawn white ].
 
-	$a asciiValue to: $h asciiValue do: [ :column |
-		self at: column asCharacter asString , '2' put: MyPawn white ].
+    self at: 'a8' put: BlackRook black.
+    self at: 'b8' put: BlackKnight black.
+    self at: 'c8' put: BlackBishop black.
+    self at: 'd8' put: BlackQueen black.
+    self at: 'e8' put: BlackKing black.
+    self at: 'f8' put: BlackBishop black.
+    self at: 'g8' put: BlackKnight black.
+    self at: 'h8' put: BlackRook black.
 
-	self at: 'a8' put: MyRook black.
-	self at: 'b8' put: MyKnight black.
-	self at: 'c8' put: MyBishop black.
-	self at: 'd8' put: MyQueen black.
-	self at: 'e8' put: MyKing black.
-	self at: 'f8' put: MyBishop black.
-	self at: 'g8' put: MyKnight black.
-	self at: 'h8' put: MyRook black.
-
-	$a asciiValue to: $h asciiValue do: [ :column |
-		self at: column asCharacter asString , '7' put: MyPawn black ]
+    $a asciiValue to: $h asciiValue do: [ :column |
+        self at: column asCharacter asString , '7' put: BlackPawn black ]
 ]
 
 { #category : 'initialization' }
 MyChessBoard >> initializeSquares [
 
-	| black |
-	enPassantTargetSquare := nil.
-	black := false.
-	$a asciiValue to: $h asciiValue do: [ :column |
-		8 to: 1 by: -1 do: [ :file |
-			| squareNotation square |
-			squareNotation := column asCharacter asString , file asString.
-			square := black
-				          ifTrue: [
-					          black := false.
-					          MyChessSquare basicNew
-						          color: Color black;
-						          board: self;
-						          initialize;
-						          yourself ]
-				          ifFalse: [
-					          black := true.
-					          MyChessSquare basicNew
-						          color: Color white;
-						          board: self;
-						          initialize;
-						          yourself ].
-			square name: squareNotation.
-			grid at: squareNotation put: square.
-			self addChild: square ].
-		black := black not ]
+    | black |
+    enPassantTargetSquare := nil.
+    black := false.
+    $a asciiValue to: $h asciiValue do: [ :column |
+        8 to: 1 by: -1 do: [ :file |
+            | squareNotation square |
+            squareNotation := column asCharacter asString , file asString.
+            square := black
+                          ifTrue: [
+                              black := false.
+                              BlackChessSquare new
+                                  board: self;
+                                  yourself ]
+                          ifFalse: [
+                              black := true.
+                              WhiteChessSquare new
+                                  board: self;
+                                  yourself ].
+            square name: squareNotation.
+            grid at: squareNotation put: square.
+            self addChild: square ].
+        black := black not ]
 ]
 
 { #category : 'accessing' }

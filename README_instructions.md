@@ -274,50 +274,229 @@ moveTo: aSquare
 
 ---
 ---
-# Remove nil checks (Einstein)
-## Résumé du travail réalisé
 
-Dans ce kata, j’ai travaillé pour supprimer toutes les utilisations de `nil` dans la logique du jeu d’échecs. Le code utilisait nil pour représenter une case vide, une sélection absente ou un déplacement hors-échiquier. 
-Cela rendait le code fragile, difficile à tester et rempli de conditions du type  `ifNil:` ou `ifNotNil:`.
 
-Pour améliorer la qualité du code, j’ai appliqué le pattern Null Object. L’idée est de remplacer chaque nil par un vrai objet neutre mais fonctionnel.
+# Remove nil checks (branche : feature/removeNil)
+## fait par Brunine Einstein POINTE-JOUR 
 
-## Ce que j’ai changé
+## 1.  Contexte du kata
 
-## 1.  Remplacement des nil par des objets dédiés
-- MyEmptyPiece remplace nil dans les contenus des cases.
-- MyNoSquare remplace un déplacement hors du plateau.
-- MyNoSelection remplace une sélection vide.
-Ces objets savent répondre aux mêmes messages que les objets “réels”, mais avec un comportement neutre.
+L’objectif du Kata est de supprimer toutes les utilisations de nil dans la logique du jeu d’échecs Chess.
+Le code d’origine utilisait nil pour :
+- une case vide,
+- une sélection absente,
+- une case hors échiquier.
 
-Exemples :
-- `MyEmptyPiece >> isEmpty ---> true`
-- `MyNoSquare >> right / left / up / down --->  self`
-- `MyNoSelection >> doUnselect--->  no-op`
+Cela rendait le projet fragile : beaucoup de `ifNil:` et `ifNotNil:`, beaucoup de risques d’erreurs, et du code plus compliqué, diffficile à comprendre.
 
-## 2. Simplification du code
-J’ai pu remplacer des conditions compliquées comme :
+Pour résoudre ce problème, j’ai appliqué plusieurs notions vues en cours :
+- OOP
+- Polymorphisme
+- Null Object Pattern
+- envoi de message
+- Reverse engineering pour comprendre le fonctionnement d’un code existant
+- TDD (ajout de tests pour sécuriser les changements)
+- Refactoring propre
+
+## 2. Approche général (Reverse Engineering)
+J’ai commencé par analyser les fichiers du projet pour comprendre où nil apparaissait. 
+J’ai dû lire le code existant pour comprendre comment :
+- les pièces se déplacent,
+- les cases sont stockées,
+- les interactions se font dans `MySelectedState`.
+
+J’ai inspecté en particulier :
+- `MyChessBoard.class.st`
+- `MyPiece`+ sous-classes
+- `MySelectedState.class.st` / `MyUnselectedState.class.st`
+- `MyChessSquare.class.st`
+- les tests dans `Myg-Chess-Tests`
+
+Cela m’a permis d’identifier les zones problématiques :
+déplacements hors plateau,  sélection vide, contenus de cases nil etc.
+
+## 3. Null Object Pattern - Où j’ai fait les changements
+- MyEmptyPiece
+Représente une pièce vide dans une case.
+
+```smalltalk
+MyEmptyPiece >> isEmpty
+    ^ true
+```
+
+- MyNoSquare
+Represente une case hors échiquier.
+Il répond à toutes les directions sans planter :
+
+```smalltalk
+MyNoSquare >> up
+    ^ self
+```
+
+### 4. Polymorphisme mis en place
+Au lieu de tester si une case est vide, je laisse la place a l’objet pour répondre :
+
+Avant :
+```smalltalk
+square contents ifNotNil: [...]
+```
+
+Après :
+```smalltalk
+square contents isEmpty ifFalse: [...]
+```
+
+L’objet MyEmptyPiece contient déjà la logique. c’est lui  qui décide. `isEmpty` n’existait pas avantje l'ai ajouté dans `MyEmptyPiece`.
+
+
+### 5. Refactoring du plateau (MyChessBoard)
+Fichier : Chess/src/Myg-Chess-Core/MyChessBoard.class.st
+La méthode la plus importante modifiée est :
+
+```smalltalk
+MyChessBoard >> at: coordinate
+    ^ grid at: coordinate ifAbsent: [ MyNoSquare new ]
+```
+
+Avant, un déplacement hors plateau renvoyait `nil`. Maintenant, il renvoie un objet fiable.
+
+ce changement impacte automatiquement :
+- les mouvements du Roi,
+- les mouvements du Cavalier,
+- les mouvements diagonaux ,
+- les déplacements successifs like `square up left`.
+
+
+
+### 6. Refactoring des cases (MyChessSquare)
+Ancienne façon d’afficher une pièce vide :
+
+```smalltalk
+contents ifNil: [ 'z' ]
+```
+
+Apres
+```smalltalk
+text := (contents isEmpty)
+    ifTrue: [ color isBlack ifFalse: [ 'z' ] ifTrue: [ 'x' ] ]
+    ifFalse: [ contents renderPieceOn: self ].
+```
+
+La case est maintenant toujours cohérente.
+`emptyContents` installe explicitement un `MyEmptyPiece` :
+
+```smalltalk
+self contents: MyEmptyPiece default
+```
+
+### 7.  Exemples de comportements avant / apres
+Avant
+- `square up up left` pouvait renvoyer `nil`.
+- Un roi en coin renvoyait des résultats partiels.
+- Le rendu visuel plantait si `contents = nil`.
+
+Aprs
+- s isOnBoard contrôle si la case est valide.
+- Les mouvements ne plantent plus.
+- Le code est plus court et plus clair.
+
+Exemple avec le roi :
+```smalltalk
+targets := king basicTargetSquares select: [:s | s isOnBoard ].
+```
+
+### MyNoSelection – remplace les nil dans la sélection
+
+Fichier : Chess/src/Myg-Chess-Core/MyNoSelection.class.st
+Avant :
+```smalltalk
+`selected := nil.
+selected ifNotNil: [ selected unselect ]
 
 ```
-aSquare contents ifNotNil: [...]
+Apres
+```smalltalk
+selected := MyNoSelection new.
 ```
 
-par du code plus clair :
+### Refactoring dans MyChessSquare
+Fichier : Chess/src/Myg-Chess-Core/MyChessSquare.class.st
+avant :
+```smalltalk
+contents ifNil: [ ... ]
+```
+Apres
+```smalltalk
+text := (contents isEmpty)
+            ifTrue: [...]
+            ifFalse: [ contents renderPieceOn: self ].
+```
+
+### 8. Tests (TDD)
+J’ai ajouté des tests pour vérifier :
+- cases vides,
+- mouvement en bordure,
+- placeholders,
+- comportements sans nil.
+
+### MyEdgePieceTest Vérifie que les déplacements en bordure utilisent bien les Null Objects.
+
+Fichier : Chess/src/Myg-Chess-Tests/MyEdgePieceTest.class.st
+
+Exemple :
+```smalltalk
+self assert: (names includes: 'b1').
+self assert: (names includes: 'a2').
+self assert: (names includes: 'b2').
 
 ```
-aSquare contents isEmpty ifFalse: [...]
-```
-Grace au polymorphisme, ce sont maintenant les objets eux-mêmes qui décident quoi faire, et non plus le client du code.
 
-## roblèmes rencontrés
+### MySquareTest 
+Fichier : Chess/src/Myg-Chess-Tests/MySquareTest.class.st
+
+```smalltalk
+self assert: (square contents isEmpty) equals: true.
+placeholder := square contents renderPieceOn: square.
+self assert: (placeholder size = 1).
+
+```
+Vérifie que `MyEmptyPiece` fonctionne.
+Ces tests garantissent que plus aucun `nil` n’apparaît dans le flux logique.
+
+
+### 9. Pourquoi cette solution ?
+- 1 Plus robuste : Plus aucun nil ne se propage dans le système.
+- 2 Orientation objet propre : Chaque objet connaît son rôle.
+Par exemple, MyNoSquare sait qu’il n’est pas sur le plateau --->> isOnBoard = false.
+- 3 Polymorphisme : Plus de branches conditionnelles.
+Le code devient déclaratif et simple à lire.
+
+
+## Problèmes rencontrés
 - Je devais comprendre où et comment nil circulait dans le projet.
+- Adapter les déplacements du Roi et du Cavalier sans casser les règles.
+- Comprendre l’architecture MygChess avant de modifier (reverse engineering).
 - Fallait faire attention à ne pas casser les règles de déplacement.
 
 ## Résultat final
 - Le code est plus clair, plus sûr et plus cohérent.
-- Il n’y a presque plus aucun test du type ifNil:.
+- Projet plus aligné avec les notions vues en cours :
+	OOP, polymorphisme, Null Object Pattern, TDD, refactoring, reverse engineering.
+- Plus aucun test `ifNil:` dans la logique du jeu.
+- tests plus riches et robustes.
+- Mouvement des pièces fiable, même en bordure du plateau.
 
 
+### Conclusion
+Ce kata a permis d’améliorer en profondeur la qualité du projet Chess.
+En remplaçant complètement l’usage de nil par des objets dédiés (Null Object Pattern), j’ai pu rendre le code plus robuste, plus cohérent et beaucoup plus simple à comprendre. 
+Grâce au polymorphisme, chaque objet (case vide, case hors plateau, sélection absente) sait maintenant quoi faire, ce qui élimine les conditions complexes et les risques d’erreurs.
+
+Ce travail m’a aussi permis d’appliquer plusieurs notions essentielles vues en cours :
+reverse engineering pour comprendre un code existant, refactoring structuré, conception orientée objet, 
+TDD pour sécuriser les modifications, et design pattern.
+
+Le résultat final est un projet plus stable, plus lisible et mieux structuré, ou les comportements sont clairement répartis entre les objets. 
 
 
 ---

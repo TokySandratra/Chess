@@ -324,4 +324,38 @@ Grace au polymorphisme, ce sont maintenant les objets eux-mêmes qui décident q
 ---
 # Refactor piece rendering (Marie)
 
+This Pull Request aims at refactoring piece rendering (Kata Refactor Piece rendering ). It introduces two main class hierarchies: Piece and ChessSquare declined into color specific subclasses:
 
+WhiteChessSquare
+BlackChessSquare
+WhitePawn
+BlackPawn
+WhiteKing
+BlackKing etc..
+This separation enables double dispatch and suppress if clauses.
+
+{ #category : 'rendering' }
+BlackPawn >> renderOnBlackSquare [
+
+	^ 'o'.
+]
+
+{ #category : 'rendering' }
+BlackPawn >> renderOnWhiteSquare [ 
+
+	^ 'O'.
+]
+
+{ #category : 'rendering' }
+BlackChessSquare >> renderPawn: aPawn [
+
+	^ aPawn renderOnBlackSquare .
+	
+]
+
+{ #category : 'rendering' }
+WhiteChessSquare >> renderPawn: aPawn [
+
+	^ aPawn renderOnWhiteSquare .
+]
+In this implementation, it's no longer necessary to check square and piece color, since each respective class represents a case.

@@ -280,4 +280,40 @@ moveTo: aSquare
 ---
 # Refactor piece rendering (Marie)
 
+This Pull Request aims at refactoring piece rendering (Kata Refactor Piece rendering ). It introduces two main class hierarchies: Piece and ChessSquare declined into color specific subclasses:
 
+. WhiteChessSquare
+. BlackChessSquare
+. WhitePawn
+. BlackPawn
+. WhiteKing
+. BlackKing etc..
+This separation enables double dispatch and suppress if clauses.
+
+smalltalk
+```
+{ #category : 'rendering' }
+BlackPawn >> renderOnBlackSquare [
+
+	^ 'o'.
+]
+
+{ #category : 'rendering' }
+BlackPawn >> renderOnWhiteSquare [ 
+
+	^ 'O'.
+]
+
+{ #category : 'rendering' }
+BlackChessSquare >> renderPawn: aPawn [
+
+	^ aPawn renderOnBlackSquare .
+	
+]
+
+{ #category : 'rendering' }
+WhiteChessSquare >> renderPawn: aPawn [
+
+	^ aPawn renderOnWhiteSquare .
+]
+```

@@ -275,6 +275,50 @@ moveTo: aSquare
 ---
 ---
 # Remove nil checks (Einstein)
+## Résumé du travail réalisé
+
+Dans ce kata, j’ai travaillé pour supprimer toutes les utilisations de `nil` dans la logique du jeu d’échecs. Le code utilisait nil pour représenter une case vide, une sélection absente ou un déplacement hors-échiquier. 
+Cela rendait le code fragile, difficile à tester et rempli de conditions du type  `ifNil:` ou `ifNotNil:`.
+
+Pour améliorer la qualité du code, j’ai appliqué le pattern Null Object. L’idée est de remplacer chaque nil par un vrai objet neutre mais fonctionnel.
+
+## Ce que j’ai changé
+
+## 1.  Remplacement des nil par des objets dédiés
+- MyEmptyPiece remplace nil dans les contenus des cases.
+- MyNoSquare remplace un déplacement hors du plateau.
+- MyNoSelection remplace une sélection vide.
+Ces objets savent répondre aux mêmes messages que les objets “réels”, mais avec un comportement neutre.
+
+Exemples :
+- `MyEmptyPiece >> isEmpty ---> true`
+- `MyNoSquare >> right / left / up / down --->  self`
+- `MyNoSelection >> doUnselect--->  no-op`
+
+## 2. Simplification du code
+J’ai pu remplacer des conditions compliquées comme :
+
+```
+aSquare contents ifNotNil: [...]
+```
+
+par du code plus clair :
+
+```
+aSquare contents isEmpty ifFalse: [...]
+```
+Grace au polymorphisme, ce sont maintenant les objets eux-mêmes qui décident quoi faire, et non plus le client du code.
+
+## roblèmes rencontrés
+- Je devais comprendre où et comment nil circulait dans le projet.
+- Fallait faire attention à ne pas casser les règles de déplacement.
+
+## Résultat final
+- Le code est plus clair, plus sûr et plus cohérent.
+- Il n’y a presque plus aucun test du type ifNil:.
+
+
+
 
 ---
 ---

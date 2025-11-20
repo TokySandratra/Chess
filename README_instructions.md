@@ -290,7 +290,7 @@ This Pull Request aims at refactoring piece rendering (Kata Refactor Piece rende
 . BlackKing etc..
 This separation enables double dispatch and suppress if clauses.
 
-smalltalk
+
 ```
 { #category : 'rendering' }
 BlackPawn >> renderOnBlackSquare [
@@ -317,3 +317,4 @@ WhiteChessSquare >> renderPawn: aPawn [
 	^ aPawn renderOnWhiteSquare .
 ]
 ```
+In this implementation, it's no longer necessary to check square and piece color, since each respective class represents a case.

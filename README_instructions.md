@@ -298,7 +298,7 @@ Pour résoudre ce problème, j’ai appliqué plusieurs notions vues en cours :
 - TDD (ajout de tests pour sécuriser les changements)
 - Refactoring propre
 
-## 2. Approche général (Reverse Engineering)
+## 2. Reverse Engineering
 J’ai commencé par analyser les fichiers du projet pour comprendre où nil apparaissait. 
 J’ai dû lire le code existant pour comprendre comment :
 - les pièces se déplacent,
@@ -346,7 +346,7 @@ Après :
 square contents isEmpty ifFalse: [...]
 ```
 
-L’objet MyEmptyPiece contient déjà la logique. c’est lui  qui décide. `isEmpty` n’existait pas avantje l'ai ajouté dans `MyEmptyPiece`.
+L’objet MyEmptyPiece contient déjà la logique. c’est lui  qui décide. `isEmpty` n’existait pas avantje l'ai ajouté dans `MyEmptyPiece` uniquement.
 
 
 ### 5. Refactoring du plateau (MyChessBoard)
@@ -410,7 +410,7 @@ targets := king basicTargetSquares select: [:s | s isOnBoard ].
 Fichier : Chess/src/Myg-Chess-Core/MyNoSelection.class.st
 Avant :
 ```smalltalk
-`selected := nil.
+selected := nil.
 selected ifNotNil: [ selected unselect ]
 
 ```
@@ -463,20 +463,104 @@ self assert: (placeholder size = 1).
 Vérifie que `MyEmptyPiece` fonctionne.
 Ces tests garantissent que plus aucun `nil` n’apparaît dans le flux logique.
 
-
-### 9. Pourquoi cette solution ?
-- 1 Plus robuste : Plus aucun nil ne se propage dans le système.
-- 2 Orientation objet propre : Chaque objet connaît son rôle.
-Par exemple, MyNoSquare sait qu’il n’est pas sur le plateau --->> isOnBoard = false.
-- 3 Polymorphisme : Plus de branches conditionnelles.
-Le code devient déclaratif et simple à lire.
-
-
 ## Problèmes rencontrés
 - Je devais comprendre où et comment nil circulait dans le projet.
 - Adapter les déplacements du Roi et du Cavalier sans casser les règles.
 - Comprendre l’architecture MygChess avant de modifier (reverse engineering).
 - Fallait faire attention à ne pas casser les règles de déplacement.
+
+
+### 9. Design Decisions
+Cette section explique les choix techniques que j’ai faits durant le kata, pourquoi je les ai faits, et comment ils influencent la structure du projet. 
+Ces décisions ne sont pas toujours visibles directement dans le code, mais elles guident tout le refactoring.
+
+### 10.1 Pourquoi le code est-il organisé de cette façon ?
+Le code a été structuré pour éliminer totalement la propagation de `nil` dans le système.
+Dans la version d’origine, 	`nil` pouvait apparaître à plusieurs niveaux :
+- quand une case était vide,
+- quand une case sortait du plateau,
+- quand aucune case n’était sélectionnée,
+- dans les déplacements successifs (up, down, right…).
+
+Chaque apparition de `nil` obligeait à ajouter des conditions (`ifNil:`) partout.
+Cela rendait le code fragile et difficile à maintenir.
+
+J’ai choisi d’utiliser le `Null Object Pattern` pour remplacer chaque `nil` par un objet valide :
+- `MyEmptyPiece` pour les cases vides,
+- `MyNoSquare` pour les déplacements hors-échiquier,
+- `MyNoSelection` pour l’absence de sélection.
+
+Ce choix permet au code de rester orienté objet :
+au lieu de vérifier les valeurs, on délègue les comportements aux objets eux-memes.
+
+
+### 10.2 Pourquoi certaines parties du code sont plus testées que d’autres ?
+J’ai priorisé les tests sur les zones les plus fragiles dans le code d’origine :
+1. Les déplacements en bordure
+		- Ce sont les endroits où `nil` apparaissait le plus souvent.
+		- Exemple : square up up left renvoyait nil.
+		- J’ai ajouté des tests dans MyEdgePieceTest pour sécuriser ces comportements.
+
+2.  Les cases vides
+	- Le rendu visuel plantait quand contents = nil.
+	J’ai créé `MySquareTest` pour vérifier que `MyEmptyPiece` fonctionne.
+
+3. L’affichage d’une pièce vide
+J’ai testé le placeholder pour assurer un comportement cohérent.
+
+Les pièces (Roi, Cavalier ..) étaient déjà testées, donc j’ai complété seulement ce qui était indispensable pour garantir la stabilité du refactoring.
+
+
+### 10.3 Où j’ai mis les priorités ?
+
+Mes priorités snt les suivantes :
+1. Supprimer toutes les erreurs liées à nil
+ priorité absolue, car elles impactaient les mouvements, l’UI et les règles du jeu.
+2. Ne jamais casser les règles des pièces
+chaque refactoring devait respecter les mouvements légaux.
+3. Maintenir la compatibilité avec l’architecture existante
+je n’ai pas modifié le design global, seulement les endroits critiques.
+5. Écrire des tests minimaux mais suffisants
+couverture ciblée, utile, pas de tests inutiles.
+6. Rendre le code plus lisible et plus déclaratif
+passer de conditions répétitives à du polymorphisme propr
+
+
+### 10.4 Utilisation des Design Patterns et pourquoi
+
+Utilisation de Null Object Pattern pour remplacer toutes les valeurs `nil`.
+- MyEmptyPiece
+- MyNoSquare
+- MyNoSelection
+
+Pourquoi ?
+Parce que je veux  transformer les `nil` en objets capables de répondre aux mêmes messages.
+Cela supprime les `ifNil:` et simplifie le flux logique.
+
+### State Pattern (dà existant dans le projet)
+- MySelectedState
+- MyUnselectedState
+Je n’ai pas modifié ce pattern, mais mon travail devait le respecter.
+L’introduction de `MyNoSelection` permet justement d’avoir un état cohérent même quand rien n’est sélectionné.
+
+### Polymorphisme
+Exemple concret :
+
+```smalltalk
+contents isEmpty ifFalse: [...]
+```
+Avant: on devrait  tester si contents était `nil`.
+Après : chaque objet sait dire s’il est vide.
+
+### Message Sending (principe fondamentale du Smalltalk)
+
+J’ai réécrit plusieurs méthodes pour éviter des conditions inutiles et laisser les objets répondre eux-memes aux messages.
+Exemple :
+```smalltalk
+square up right
+```
+renvoie soit un vrai Square soit un `MyNoSquare`, mais jamais nil.
+
 
 ## Résultat final
 - Le code est plus clair, plus sûr et plus cohérent.

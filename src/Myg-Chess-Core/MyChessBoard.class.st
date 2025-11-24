@@ -208,7 +208,7 @@ MyChessBoard >> initializePieces [
 MyChessBoard >> initializeSquares [
 
 	| black |
-	enPassantTargetSquare := nil.
+	enPassantTargetSquare := MyNoSquare new.
 	black := false.
 	$a asciiValue to: $h asciiValue do: [ :column |
 		8 to: 1 by: -1 do: [ :file |

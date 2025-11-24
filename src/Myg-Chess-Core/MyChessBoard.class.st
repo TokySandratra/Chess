@@ -203,28 +203,32 @@ MyChessBoard >> initializePieces [
 { #category : 'initialization' }
 MyChessBoard >> initializeSquares [
 
-    | black |
-    enPassantTargetSquare := nil.
-    black := false.
-    $a asciiValue to: $h asciiValue do: [ :column |
-        8 to: 1 by: -1 do: [ :file |
-            | squareNotation square |
-            squareNotation := column asCharacter asString , file asString.
-            square := black
-                          ifTrue: [
-                              black := false.
-                              BlackChessSquare new
-                                  board: self;
-                                  yourself ]
-                          ifFalse: [
-                              black := true.
-                              WhiteChessSquare new
-                                  board: self;
-                                  yourself ].
-            square name: squareNotation.
-            grid at: squareNotation put: square.
-            self addChild: square ].
-        black := black not ]
+	| black |
+	enPassantTargetSquare := MyNoSquare new.
+	black := false.
+	$a asciiValue to: $h asciiValue do: [ :column |
+		8 to: 1 by: -1 do: [ :file |
+			| squareNotation square |
+			squareNotation := column asCharacter asString , file asString.
+			square := black
+				          ifTrue: [
+					          black := false.
+					          MyChessSquare basicNew
+						          color: Color black;
+						          board: self;
+						          initialize;
+						          yourself ]
+				          ifFalse: [
+					          black := true.
+					          MyChessSquare basicNew
+						          color: Color white;
+						          board: self;
+						          initialize;
+						          yourself ].
+			square name: squareNotation.
+			grid at: squareNotation put: square.
+			self addChild: square ].
+		black := black not ]
 ]
 
 { #category : 'accessing' }

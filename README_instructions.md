@@ -274,10 +274,351 @@ moveTo: aSquare
 
 ---
 ---
-# Remove nil checks (Einstein)
+
+
+# Remove nil checks (branche : feature/removeNil)
+## fait par Brunine Einstein POINTE-JOUR 
+
+## 1.  Contexte du kata
+
+L’objectif du Kata est de supprimer toutes les utilisations de nil dans la logique du jeu d’échecs Chess.
+Le code d’origine utilisait nil pour :
+- une case vide,
+- une sélection absente,
+- une case hors échiquier.
+
+Cela rendait le projet fragile : beaucoup de `ifNil:` et `ifNotNil:`, beaucoup de risques d’erreurs, et du code plus compliqué, diffficile à comprendre.
+
+Pour résoudre ce problème, j’ai appliqué plusieurs notions vues en cours :
+- OOP
+- Polymorphisme
+- Null Object Pattern
+- envoi de message
+- Reverse engineering pour comprendre le fonctionnement d’un code existant
+- TDD (ajout de tests pour sécuriser les changements)
+- Refactoring propre
+
+## 2. Reverse Engineering
+J’ai commencé par analyser les fichiers du projet pour comprendre où nil apparaissait. 
+J’ai dû lire le code existant pour comprendre comment :
+- les pièces se déplacent,
+- les cases sont stockées,
+- les interactions se font dans `MySelectedState`.
+
+J’ai inspecté en particulier :
+- `MyChessBoard.class.st`
+- `MyPiece`+ sous-classes
+- `MySelectedState.class.st` / `MyUnselectedState.class.st`
+- `MyChessSquare.class.st`
+- les tests dans `Myg-Chess-Tests`
+
+Cela m’a permis d’identifier les zones problématiques :
+déplacements hors plateau,  sélection vide, contenus de cases nil etc.
+
+## 3. Null Object Pattern - Où j’ai fait les changements
+- MyEmptyPiece
+Représente une pièce vide dans une case.
+
+```smalltalk
+MyEmptyPiece >> isEmpty
+    ^ true
+```
+
+- MyNoSquare
+Represente une case hors échiquier.
+Il répond à toutes les directions sans planter :
+
+```smalltalk
+MyNoSquare >> up
+    ^ self
+```
+
+### 4. Polymorphisme mis en place
+Au lieu de tester si une case est vide, je laisse la place a l’objet pour répondre :
+
+Avant :
+```smalltalk
+square contents ifNotNil: [...]
+```
+
+Après :
+```smalltalk
+square contents isEmpty ifFalse: [...]
+```
+
+L’objet MyEmptyPiece contient déjà la logique. c’est lui  qui décide. `isEmpty` n’existait pas avantje l'ai ajouté dans `MyEmptyPiece` uniquement.
+
+
+### 5. Refactoring du plateau (MyChessBoard)
+Fichier : Chess/src/Myg-Chess-Core/MyChessBoard.class.st
+La méthode la plus importante modifiée est :
+
+```smalltalk
+MyChessBoard >> at: coordinate
+    ^ grid at: coordinate ifAbsent: [ MyNoSquare new ]
+```
+
+Avant, un déplacement hors plateau renvoyait `nil`. Maintenant, il renvoie un objet fiable.
+
+ce changement impacte automatiquement :
+- les mouvements du Roi,
+- les mouvements du Cavalier,
+- les mouvements diagonaux ,
+- les déplacements successifs like `square up left`.
+
+
+
+### 6. Refactoring des cases (MyChessSquare)
+Ancienne façon d’afficher une pièce vide :
+
+```smalltalk
+contents ifNil: [ 'z' ]
+```
+
+Apres
+```smalltalk
+text := (contents isEmpty)
+    ifTrue: [ color isBlack ifFalse: [ 'z' ] ifTrue: [ 'x' ] ]
+    ifFalse: [ contents renderPieceOn: self ].
+```
+
+La case est maintenant toujours cohérente.
+`emptyContents` installe explicitement un `MyEmptyPiece` :
+
+```smalltalk
+self contents: MyEmptyPiece default
+```
+
+### 7.  Exemples de comportements avant / apres
+Avant
+- `square up up left` pouvait renvoyer `nil`.
+- Un roi en coin renvoyait des résultats partiels.
+- Le rendu visuel plantait si `contents = nil`.
+
+Aprs
+- s isOnBoard contrôle si la case est valide.
+- Les mouvements ne plantent plus.
+- Le code est plus court et plus clair.
+
+Exemple avec le roi :
+```smalltalk
+targets := king basicTargetSquares select: [:s | s isOnBoard ].
+```
+
+### MyNoSelection – remplace les nil dans la sélection
+
+Fichier : Chess/src/Myg-Chess-Core/MyNoSelection.class.st
+Avant :
+```smalltalk
+selected := nil.
+selected ifNotNil: [ selected unselect ]
+
+```
+Apres
+```smalltalk
+selected := MyNoSelection new.
+```
+
+### Refactoring dans MyChessSquare
+Fichier : Chess/src/Myg-Chess-Core/MyChessSquare.class.st
+avant :
+```smalltalk
+contents ifNil: [ ... ]
+```
+Apres
+```smalltalk
+text := (contents isEmpty)
+            ifTrue: [...]
+            ifFalse: [ contents renderPieceOn: self ].
+```
+
+### 8. Tests (TDD)
+J’ai ajouté des tests pour vérifier :
+- cases vides,
+- mouvement en bordure,
+- placeholders,
+- comportements sans nil.
+
+### MyEdgePieceTest Vérifie que les déplacements en bordure utilisent bien les Null Objects.
+
+Fichier : Chess/src/Myg-Chess-Tests/MyEdgePieceTest.class.st
+
+Exemple :
+```smalltalk
+self assert: (names includes: 'b1').
+self assert: (names includes: 'a2').
+self assert: (names includes: 'b2').
+
+```
+
+### MySquareTest 
+Fichier : Chess/src/Myg-Chess-Tests/MySquareTest.class.st
+
+```smalltalk
+self assert: (square contents isEmpty) equals: true.
+placeholder := square contents renderPieceOn: square.
+self assert: (placeholder size = 1).
+
+```
+Vérifie que `MyEmptyPiece` fonctionne.
+Ces tests garantissent que plus aucun `nil` n’apparaît dans le flux logique.
+
+## Problèmes rencontrés
+- Je devais comprendre où et comment nil circulait dans le projet.
+- Adapter les déplacements du Roi et du Cavalier sans casser les règles.
+- Comprendre l’architecture MygChess avant de modifier (reverse engineering).
+- Fallait faire attention à ne pas casser les règles de déplacement.
+
+
+### 9. Design Decisions
+Cette section explique les choix techniques que j’ai faits durant le kata, pourquoi je les ai faits, et comment ils influencent la structure du projet. 
+Ces décisions ne sont pas toujours visibles directement dans le code, mais elles guident tout le refactoring.
+
+### 10.1 Pourquoi le code est-il organisé de cette façon ?
+Le code a été structuré pour éliminer totalement la propagation de `nil` dans le système.
+Dans la version d’origine, 	`nil` pouvait apparaître à plusieurs niveaux :
+- quand une case était vide,
+- quand une case sortait du plateau,
+- quand aucune case n’était sélectionnée,
+- dans les déplacements successifs (up, down, right…).
+
+Chaque apparition de `nil` obligeait à ajouter des conditions (`ifNil:`) partout.
+Cela rendait le code fragile et difficile à maintenir.
+
+J’ai choisi d’utiliser le `Null Object Pattern` pour remplacer chaque `nil` par un objet valide :
+- `MyEmptyPiece` pour les cases vides,
+- `MyNoSquare` pour les déplacements hors-échiquier,
+- `MyNoSelection` pour l’absence de sélection.
+
+Ce choix permet au code de rester orienté objet :
+au lieu de vérifier les valeurs, on délègue les comportements aux objets eux-memes.
+
+
+### 10.2 Pourquoi certaines parties du code sont plus testées que d’autres ?
+J’ai priorisé les tests sur les zones les plus fragiles dans le code d’origine :
+1. Les déplacements en bordure
+		- Ce sont les endroits où `nil` apparaissait le plus souvent.
+		- Exemple : square up up left renvoyait nil.
+		- J’ai ajouté des tests dans MyEdgePieceTest pour sécuriser ces comportements.
+
+2.  Les cases vides
+	- Le rendu visuel plantait quand contents = nil.
+	J’ai créé `MySquareTest` pour vérifier que `MyEmptyPiece` fonctionne.
+
+3. L’affichage d’une pièce vide
+J’ai testé le placeholder pour assurer un comportement cohérent.
+
+Les pièces (Roi, Cavalier ..) étaient déjà testées, donc j’ai complété seulement ce qui était indispensable pour garantir la stabilité du refactoring.
+
+
+### 10.3 Où j’ai mis les priorités ?
+
+Mes priorités snt les suivantes :
+1. Supprimer toutes les erreurs liées à nil
+ priorité absolue, car elles impactaient les mouvements, l’UI et les règles du jeu.
+2. Ne jamais casser les règles des pièces
+chaque refactoring devait respecter les mouvements légaux.
+3. Maintenir la compatibilité avec l’architecture existante
+je n’ai pas modifié le design global, seulement les endroits critiques.
+5. Écrire des tests minimaux mais suffisants
+couverture ciblée, utile, pas de tests inutiles.
+6. Rendre le code plus lisible et plus déclaratif
+passer de conditions répétitives à du polymorphisme propr
+
+
+### 10.4 Utilisation des Design Patterns et pourquoi
+
+Utilisation de Null Object Pattern pour remplacer toutes les valeurs `nil`.
+- MyEmptyPiece
+- MyNoSquare
+- MyNoSelection
+
+Pourquoi ?
+Parce que je veux  transformer les `nil` en objets capables de répondre aux mêmes messages.
+Cela supprime les `ifNil:` et simplifie le flux logique.
+
+### State Pattern (dà existant dans le projet)
+- MySelectedState
+- MyUnselectedState
+Je n’ai pas modifié ce pattern, mais mon travail devait le respecter.
+L’introduction de `MyNoSelection` permet justement d’avoir un état cohérent même quand rien n’est sélectionné.
+
+### Polymorphisme
+Exemple concret :
+
+```smalltalk
+contents isEmpty ifFalse: [...]
+```
+Avant: on devrait  tester si contents était `nil`.
+Après : chaque objet sait dire s’il est vide.
+
+### Message Sending (principe fondamentale du Smalltalk)
+
+J’ai réécrit plusieurs méthodes pour éviter des conditions inutiles et laisser les objets répondre eux-memes aux messages.
+Exemple :
+```smalltalk
+square up right
+```
+renvoie soit un vrai Square soit un `MyNoSquare`, mais jamais nil.
+
+
+## Résultat final
+- Le code est plus clair, plus sûr et plus cohérent.
+- Projet plus aligné avec les notions vues en cours :
+	OOP, polymorphisme, Null Object Pattern, TDD, refactoring, reverse engineering.
+- Plus aucun test `ifNil:` dans la logique du jeu.
+- tests plus riches et robustes.
+- Mouvement des pièces fiable, même en bordure du plateau.
+
+
+### Conclusion
+Ce kata a permis d’améliorer en profondeur la qualité du projet Chess.
+En remplaçant complètement l’usage de nil par des objets dédiés (Null Object Pattern), j’ai pu rendre le code plus robuste, plus cohérent et beaucoup plus simple à comprendre. 
+Grâce au polymorphisme, chaque objet (case vide, case hors plateau, sélection absente) sait maintenant quoi faire, ce qui élimine les conditions complexes et les risques d’erreurs.
+
+Ce travail m’a aussi permis d’appliquer plusieurs notions essentielles vues en cours :
+reverse engineering pour comprendre un code existant, refactoring structuré, conception orientée objet, 
+TDD pour sécuriser les modifications, et design pattern.
+
+Le résultat final est un projet plus stable, plus lisible et mieux structuré, ou les comportements sont clairement répartis entre les objets. 
+
 
 ---
 ---
 # Refactor piece rendering (Marie)
 
+This Pull Request aims at refactoring piece rendering (Kata Refactor Piece rendering ). It introduces two main class hierarchies: Piece and ChessSquare declined into color specific subclasses:
 
+WhiteChessSquare
+BlackChessSquare
+WhitePawn
+BlackPawn
+WhiteKing
+BlackKing etc..
+This separation enables double dispatch and suppress if clauses.
+
+{ #category : 'rendering' }
+BlackPawn >> renderOnBlackSquare [
+
+	^ 'o'.
+]
+
+{ #category : 'rendering' }
+BlackPawn >> renderOnWhiteSquare [ 
+
+	^ 'O'.
+]
+
+{ #category : 'rendering' }
+BlackChessSquare >> renderPawn: aPawn [
+
+	^ aPawn renderOnBlackSquare .
+	
+]
+
+{ #category : 'rendering' }
+WhiteChessSquare >> renderPawn: aPawn [
+
+	^ aPawn renderOnWhiteSquare .
+]
+In this implementation, it's no longer necessary to check square and piece color, since each respective class represents a case.

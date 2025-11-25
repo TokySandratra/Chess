@@ -585,40 +585,88 @@ Le résultat final est un projet plus stable, plus lisible et mieux structuré, 
 
 ---
 ---
-# Refactor piece rendering (Marie)
+# Refactor piece rendering - branche features/piece-rendering (Marie)
 
-This Pull Request aims at refactoring piece rendering (Kata Refactor Piece rendering ). It introduces two main class hierarchies: Piece and ChessSquare declined into color specific subclasses:
+### 1. Contexte du projet
+Dans le cadre du kata « Refactor Piece Rendering », l’objectif était d’améliorer l’architecture du code responsable de l’affichage des pièces d’échecs dans le jeu.
+La version initiale du code s’appuyait fortement sur des structures conditionnelles (if) pour déterminer, selon la couleur de la pièce et la couleur de la case, quel rendu afficher.
+Cette approche rendait le code :
+difficile à lire,
+difficile à maintenir,
+peu évolutive.
+Le refactoring visait donc à supprimer ces conditions et à mettre en place un design plus propre et orienté objet, en exploitant les capacités du mécanisme de double dispatch.
 
-WhiteChessSquare
-BlackChessSquare
-WhitePawn
-BlackPawn
-WhiteKing
-BlackKing etc..
-This separation enables double dispatch and suppress if clauses.
+### 2. Objectifs du refactoring
+Le travail visait à :
+- Éliminer les nombreux if utilisés pour tester la couleur de la pièce et celle de la case.
+- Introduire deux hiérarchies de classes :
+- 	Piece : déclinée en WhitePawn, BlackPawn, WhiteKing, etc.
+- 	ChessSquare : déclinée en WhiteChessSquare et BlackChessSquare.
+- Permettre un double dispatch :
+- 	la case décide de quelle méthode appeler selon sa couleur,
+- 	La pièce fournit sa propre implémentation selon son type.
+
+Grâce à ces hiérarchies, chaque combinaison pièce * case est gérée automatiquement par le système d’envoie de messages.
+
+### 3. Implémentation réalisée
+Le refactoring repose sur la création de méthodes spécialisées telles que :
+### Extrait de code - Pièces
+```smalltalk
 
 { #category : 'rendering' }
 BlackPawn >> renderOnBlackSquare [
-
-	^ 'o'.
+    ^ 'o'.
 ]
 
 { #category : 'rendering' }
 BlackPawn >> renderOnWhiteSquare [ 
-
-	^ 'O'.
+    ^ 'O'.
 ]
+```
+
+Chaque sous-classe de Piece sait se rendre sur une case noire ou une case blanche, sans que le programme ait besoin de tester la couleur.
+### Extrait de code - Cases
+```smalltalk
 
 { #category : 'rendering' }
 BlackChessSquare >> renderPawn: aPawn [
-
-	^ aPawn renderOnBlackSquare .
-	
+    ^ aPawn renderOnBlackSquare .
 ]
 
 { #category : 'rendering' }
 WhiteChessSquare >> renderPawn: aPawn [
-
-	^ aPawn renderOnWhiteSquare .
+    ^ aPawn renderOnWhiteSquare .
 ]
-In this implementation, it's no longer necessary to check square and piece color, since each respective class represents a case.
+```
+
+Ici :
+La case choisit la méthode (renderPawn:).
+La pièce répond avec son comportement spécifique (renderOnBlackSquare, renderOnWhiteSquare).
+
+Ainsi, le système effectue deux dispatch successifs, l’un sur le type de la case, l’autre sur le type de la pièce.
+
+### 4. Résultat obtenu
+Grâce à ce refactoring :
+- Les if ont totalement disparu.
+- Le code est désormais conforme aux principes SOLID, en particulier :
+- 	Single Responsibility Principle
+- 	Open/Closed Principle
+
+L’ajout d’une nouvelle pièce ou d’une nouvelle variante du rendu ne nécessite plus de modifier du code existant.
+Le comportement est entièrement déterminé par les classes, non par des conditions.
+
+### 5. Problème rencontré
+Au cours du travail, j’ai rencontré un problème lié à l’utilisation de Git :
+Avant de pousser mes modifications (git push), je n’ai pas effectué un git pull, ce qui aurait permis de récupérer les mises à jour précédentes du dépôt.
+Cela a entraîné des conflits entre mes fichiers locaux et ceux déjà présents sur le serveur.
+Pour résoudre le problème, j’ai dû :
+- analyser les conflits,
+- les corriger manuellement avant de finaliser le merge et renvoyer les modifications.
+Ce point m’a permis de mieux comprendre l’importance de synchroniser régulièrement son dépôt local avant de pousser des modifications.
+
+### 6. Conclusion
+Ce refactoring a permis de transformer un code basé sur des conditions multiples en une architecture orientée objet propre et extensible.
+L’utilisation du double dispatch a permis de déléguer la responsabilité du rendu aux objets eux-mêmes, améliorant ainsi la lisibilité, la modularité et la maintenabilité du projet.
+
+Ce travail m’a également permis de mieux comprendre l'importance des refactorings, et m'aidé à comprendre la gestion de version Git.
+
